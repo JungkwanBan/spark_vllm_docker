@@ -24,10 +24,10 @@ services:
       - VLLM_USAGE_SOURCE=production
       - TORCH_MATMUL_PRECISION=high
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-      # ---- Model-specific env vars (empty = not set) ----
-      - VLLM_MARLIN_USE_ATOMIC_ADD=${VLLM_MARLIN_USE_ATOMIC_ADD:-}
-      - VLLM_USE_FLASHINFER_MOE_FP4=${VLLM_USE_FLASHINFER_MOE_FP4:-}
-      - VLLM_NVFP4_MOE_FORCE_MARLIN=${VLLM_NVFP4_MOE_FORCE_MARLIN:-}
+      # ---- Model-specific env vars (0 = disabled) ----
+      - VLLM_MARLIN_USE_ATOMIC_ADD=${VLLM_MARLIN_USE_ATOMIC_ADD:-0}
+      - VLLM_USE_FLASHINFER_MOE_FP4=${VLLM_USE_FLASHINFER_MOE_FP4:-0}
+      - VLLM_NVFP4_MOE_FORCE_MARLIN=${VLLM_NVFP4_MOE_FORCE_MARLIN:-0}
       # ---- Multi-node networking (200Gbps RoCE) ----
       - VLLM_HOST_IP=${HEAD_ROCE_IP}
       - RAY_NODE_IP_ADDRESS=${HEAD_ROCE_IP}
@@ -88,10 +88,10 @@ services:
       - NCCL_IB_DISABLE=0
       - NCCL_DEBUG=INFO
       - RAY_memory_monitor_refresh_ms=0
-      # ---- Model-specific env vars (empty = not set) ----
-      - VLLM_MARLIN_USE_ATOMIC_ADD=${VLLM_MARLIN_USE_ATOMIC_ADD:-}
-      - VLLM_USE_FLASHINFER_MOE_FP4=${VLLM_USE_FLASHINFER_MOE_FP4:-}
-      - VLLM_NVFP4_MOE_FORCE_MARLIN=${VLLM_NVFP4_MOE_FORCE_MARLIN:-}
+      # ---- Model-specific env vars (0 = disabled) ----
+      - VLLM_MARLIN_USE_ATOMIC_ADD=${VLLM_MARLIN_USE_ATOMIC_ADD:-0}
+      - VLLM_USE_FLASHINFER_MOE_FP4=${VLLM_USE_FLASHINFER_MOE_FP4:-0}
+      - VLLM_NVFP4_MOE_FORCE_MARLIN=${VLLM_NVFP4_MOE_FORCE_MARLIN:-0}
     deploy:
       resources:
         reservations:
