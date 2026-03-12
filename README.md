@@ -43,6 +43,9 @@ Supports multiple Qwen3.5 models with different quantizations via `.env` presets
 ```bash
 # Base image (FP8 / INT4)
 docker pull ghcr.io/jungkwanban/vllm-spark:v020-fi064
+
+# NVFP4 extension (optional, only for NVFP4 models)
+docker pull ghcr.io/jungkwanban/vllm-spark:v020-fi064-nvfp4
 ```
 
 #### Option B: Build from source
