@@ -1,0 +1,114 @@
+services:
+  head:
+    image: ${VLLM_IMAGE}
+    container_name: vllm-spark-head
+    profiles: ["head"]
+    network_mode: host
+    ipc: host
+    environment:
+      # ---- Role ----
+      - ROLE=head
+      - TP_SIZE=${TP_SIZE}
+      # ---- Model ----
+      - MODEL_CONTAINER_PATH=${MODEL_CONTAINER_PATH}
+      - SERVED_MODEL_NAME=${SERVED_MODEL_NAME}
+      # ---- vLLM Serving ----
+      - HOST_PORT=${HOST_PORT}
+      - MAX_MODEL_LEN=${MAX_MODEL_LEN}
+      - MAX_NUM_SEQS=${MAX_NUM_SEQS}
+      - GPU_MEMORY_UTILIZATION=${GPU_MEMORY_UTILIZATION}
+      - MAX_NUM_BATCHED_TOKENS=${MAX_NUM_BATCHED_TOKENS}
+      - VLLM_EXTRA_ARGS=${VLLM_EXTRA_ARGS:-}
+      # ---- Runtime ----
+      - NVIDIA_VISIBLE_DEVICES=all
+      - VLLM_USAGE_SOURCE=production
+      - TORCH_MATMUL_PRECISION=high
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+      # ---- Model-specific env vars (empty = not set) ----
+      - VLLM_MARLIN_USE_ATOMIC_ADD=${VLLM_MARLIN_USE_ATOMIC_ADD:-}
+      - VLLM_USE_FLASHINFER_MOE_FP4=${VLLM_USE_FLASHINFER_MOE_FP4:-}
+      - VLLM_NVFP4_MOE_FORCE_MARLIN=${VLLM_NVFP4_MOE_FORCE_MARLIN:-}
+      # ---- Multi-node networking (200Gbps RoCE) ----
+      - VLLM_HOST_IP=${HEAD_ROCE_IP}
+      - RAY_NODE_IP_ADDRESS=${HEAD_ROCE_IP}
+      - RAY_OVERRIDE_NODE_IP_ADDRESS=${HEAD_ROCE_IP}
+      - HEAD_ROCE_IP=${HEAD_ROCE_IP}
+      - RAY_PORT=${RAY_PORT}
+      - NCCL_SOCKET_IFNAME=${ROCE_IF_NAME}
+      - GLOO_SOCKET_IFNAME=${ROCE_IF_NAME}
+      - UCX_NET_DEVICES=${ROCE_IF_NAME}
+      - NCCL_IB_HCA=${IB_HCA_NAME}
+      - NCCL_IB_DISABLE=0
+      - NCCL_DEBUG=INFO
+      - RAY_DEDUP_LOGS=0
+      - RAY_memory_monitor_refresh_ms=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ${MODEL_PATH}:${MODEL_CONTAINER_PATH}:ro
+      - ./.cache/vllm:/root/.cache/vllm
+      - /sys/class/infiniband:/sys/class/infiniband:ro
+      - ./entrypoint.sh:/entrypoint.sh:ro
+    devices:
+      - /dev/infiniband:/dev/infiniband
+    entrypoint: ["bash", "/entrypoint.sh"]
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    restart: unless-stopped
+
+  worker:
+    image: ${VLLM_IMAGE}
+    container_name: vllm-spark-worker
+    profiles: ["worker"]
+    network_mode: host
+    ipc: host
+    environment:
+      # ---- Role ----
+      - ROLE=worker
+      - TP_SIZE=${TP_SIZE}
+      # ---- Multi-node networking (200Gbps RoCE) ----
+      - NVIDIA_VISIBLE_DEVICES=all
+      - VLLM_HOST_IP=${WORKER_ROCE_IP}
+      - RAY_NODE_IP_ADDRESS=${WORKER_ROCE_IP}
+      - RAY_OVERRIDE_NODE_IP_ADDRESS=${WORKER_ROCE_IP}
+      - HEAD_ROCE_IP=${HEAD_ROCE_IP}
+      - WORKER_ROCE_IP=${WORKER_ROCE_IP}
+      - RAY_PORT=${RAY_PORT}
+      - NCCL_SOCKET_IFNAME=${ROCE_IF_NAME}
+      - GLOO_SOCKET_IFNAME=${ROCE_IF_NAME}
+      - UCX_NET_DEVICES=${ROCE_IF_NAME}
+      - NCCL_IB_HCA=${IB_HCA_NAME}
+      - NCCL_IB_DISABLE=0
+      - NCCL_DEBUG=INFO
+      - RAY_memory_monitor_refresh_ms=0
+      # ---- Model-specific env vars (empty = not set) ----
+      - VLLM_MARLIN_USE_ATOMIC_ADD=${VLLM_MARLIN_USE_ATOMIC_ADD:-}
+      - VLLM_USE_FLASHINFER_MOE_FP4=${VLLM_USE_FLASHINFER_MOE_FP4:-}
+      - VLLM_NVFP4_MOE_FORCE_MARLIN=${VLLM_NVFP4_MOE_FORCE_MARLIN:-}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ${MODEL_PATH}:${MODEL_CONTAINER_PATH}:ro
+      - ./.cache/vllm:/root/.cache/vllm
+      - /sys/class/infiniband:/sys/class/infiniband:ro
+      - ./entrypoint.sh:/entrypoint.sh:ro
+    devices:
+      - /dev/infiniband:/dev/infiniband
+    entrypoint: ["bash", "/entrypoint.sh"]
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    restart: unless-stopped

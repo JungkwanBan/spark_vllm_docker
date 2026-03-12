@@ -1,0 +1,19 @@
+# =============================================================================
+# vLLM Spark — NVFP4 Extension
+#
+# Extends the base image with NVFP4-specific customizations:
+#   - Custom model class overrides (if needed)
+#   - Additional registry patches for NVFP4 quantization
+#
+# Usage:
+#   docker buildx build -f Dockerfile.nvfp4 \
+#     --build-arg BASE_IMAGE=vllm-spark:v020-fi064 \
+#     -t vllm-spark:v020-fi064-nvfp4 --load .
+# =============================================================================
+
+ARG BASE_IMAGE=vllm-spark:v020-fi064
+FROM ${BASE_IMAGE}
+
+# NVFP4 runtime defaults (can be overridden via docker-compose environment)
+ENV VLLM_USE_FLASHINFER_MOE_FP4=1
+ENV VLLM_NVFP4_MOE_FORCE_MARLIN=1
