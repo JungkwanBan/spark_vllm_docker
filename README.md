@@ -36,7 +36,16 @@ Supports multiple Qwen3.5 models with different quantizations via `.env` presets
 
 ## Quick Start
 
-### 0. Build the Docker Image
+### 0. Get the Docker Image
+
+#### Option A: Pull pre-built image from GHCR
+
+```bash
+# Base image (FP8 / INT4)
+docker pull ghcr.io/jungkwanban/vllm-spark:v020-fi064
+```
+
+#### Option B: Build from source
 
 ```bash
 # Base image (FP8 / INT4)
